@@ -5,6 +5,10 @@ declare(strict_types=1);
 require __DIR__ . '/_helpers.php';
 requireApiLogin();
 
+if (in_array(method(), ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+    requireApiAdmin();
+}
+
 function trainingApiPayload(array $data): array
 {
     requireFields($data, [
@@ -54,7 +58,7 @@ try {
     }
 
     if (method() === 'GET') {
-        $where = boolParam('incluir_inativos') ? ['1 = 1'] : ['t.ativo = 1'];
+        $where = apiIsAdmin() && boolParam('incluir_inativos') ? ['1 = 1'] : ['t.ativo = 1'];
         $params = [];
         foreach (['status' => 't.status_treinamento_id', 'tipo' => 't.tipo_treinamento_id', 'responsavel' => 't.responsavel_pessoa_id'] as $query => $column) {
             $value = apiId($_GET[$query] ?? null);

@@ -18,17 +18,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = trim((string) ($_POST['email'] ?? ''));
         $senha = (string) ($_POST['senha'] ?? '');
 
-        $stmt = db()->prepare('SELECT id, nome, email, senha FROM usuario WHERE email = ? AND ativo = 1 LIMIT 1');
+        $stmt = db()->prepare('SELECT id, nome, email, senha, perfil, tema, cor_tema FROM usuario WHERE email = ? AND ativo = 1 LIMIT 1');
         $stmt->execute([$email]);
         $usuario = $stmt->fetch();
 
         if ($usuario && password_verify($senha, $usuario['senha'])) {
             session_regenerate_id(true);
-            $_SESSION['usuario'] = [
-                'id' => (int) $usuario['id'],
-                'nome' => $usuario['nome'],
-                'email' => $usuario['email'],
-            ];
+            storeUserInSession($usuario);
             redirect('index.php');
         }
 
@@ -46,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="css/app.css">
 </head>
-<body class="login-page">
+<body class="login-page theme-light">
 <section class="login-card">
     <div class="login-brand">
         <span class="brand-icon"><i class="fa-solid fa-graduation-cap"></i></span>
@@ -72,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </label>
         <button class="btn primary full-button" type="submit">Entrar <i class="fa-solid fa-arrow-right"></i></button>
     </form>
-    <p class="login-hint">Acesso inicial: <strong>admin@admin.com</strong> / <strong>admin</strong></p>
+    <p class="login-hint">Admin: <strong>admin@admin.com</strong> / <strong>admin</strong><br>Usuário: <strong>usuario@usuario.com</strong> / <strong>usuario</strong></p>
 </section>
 </body>
 </html>

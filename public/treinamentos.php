@@ -6,6 +6,7 @@ require_once __DIR__ . '/_layout.php';
 requireLogin();
 
 $pdo = db();
+$admin = isAdmin();
 
 function trainingLookups(PDO $pdo): array
 {
@@ -41,6 +42,9 @@ function validTrainingData(array $data): array
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!$admin) {
+        requireAdmin();
+    }
     requireCsrf('treinamentos.php');
     $action = (string) ($_POST['action'] ?? '');
 
@@ -85,9 +89,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect('treinamentos.php');
 }
 
+$editId = positiveInt($_GET['editar'] ?? null);
+if (!$admin && (isset($_GET['novo']) || $editId)) {
+    setFlash('error', 'Acesso não permitido para o seu perfil.');
+    redirect('treinamentos.php');
+}
+
 $lookups = trainingLookups($pdo);
 $editing = null;
-$editId = positiveInt($_GET['editar'] ?? null);
 if ($editId) {
     $stmt = $pdo->prepare('SELECT * FROM treinamento WHERE id = ?');
     $stmt->execute([$editId]);
@@ -98,7 +107,7 @@ if ($editId) {
     }
 }
 
-$showForm = isset($_GET['novo']) || $editing !== null;
+$showForm = $admin && (isset($_GET['novo']) || $editing !== null);
 $filters = [
     'q' => trim((string) ($_GET['q'] ?? '')),
     'status' => positiveInt($_GET['status'] ?? null),
@@ -118,7 +127,7 @@ $trainings = $stmt->fetchAll();
 
 renderHeader('Treinamentos', 'treinamentos');
 ?>
-<header class="page-header"><div><span class="eyebrow">Gestão</span><h1>Treinamentos</h1><p>Cadastre e acompanhe as capacitações institucionais.</p></div><a class="btn primary" href="treinamentos.php?novo=1"><i class="fa-solid fa-plus"></i> Novo treinamento</a></header>
+<header class="page-header"><div><span class="eyebrow"><?= $admin ? 'Gestão' : 'Consulta' ?></span><h1>Treinamentos</h1><p><?= $admin ? 'Cadastre e acompanhe as capacitações institucionais.' : 'Consulte as capacitações institucionais disponíveis.' ?></p></div><?php if ($admin): ?><a class="btn primary" href="treinamentos.php?novo=1"><i class="fa-solid fa-plus"></i> Novo treinamento</a><?php endif; ?></header>
 
 <?php if ($showForm): $form = $editing ?: []; ?>
 <section class="panel">
@@ -150,8 +159,8 @@ renderHeader('Treinamentos', 'treinamentos');
         <div class="form-actions full-row"><a class="btn secondary" href="treinamentos.php">Limpar filtros</a><button class="btn primary" type="submit"><i class="fa-solid fa-filter"></i> Filtrar</button></div>
     </form>
     <?php if (!$trainings): ?><div class="empty-state"><i class="fa-solid fa-graduation-cap"></i><strong>Nenhum treinamento encontrado</strong><p>Altere os filtros ou cadastre um novo treinamento.</p></div>
-    <?php else: ?><div class="table-wrapper"><table><thead><tr><th>Treinamento</th><th>Período</th><th>Tipo / status</th><th>Local</th><th>Responsável</th><th>Inscritos</th><th>Ações</th></tr></thead><tbody><?php foreach ($trainings as $training): ?><tr>
-        <td><strong><?= e($training['titulo']) ?></strong><br><small><?= e(formatHours($training['carga_horaria_minutos'])) ?> · <?= e($training['instrutor']) ?></small></td><td><?= e(formatDateTime($training['data_inicio'])) ?><br><small>até <?= e(formatDateTime($training['data_fim'])) ?></small></td><td><?= e($training['tipo_nome']) ?><br><span class="badge"><?= e($training['status_nome']) ?></span></td><td><?= e($training['local_nome']) ?></td><td><?= e($training['responsavel_nome'] ?: 'Não informado') ?></td><td><?= (int) $training['inscritos'] ?></td><td><div class="actions"><a class="btn secondary small" href="treinamentos.php?editar=<?= (int) $training['id'] ?>"><i class="fa-solid fa-pen"></i> Editar</a><form method="post" class="inline-form" onsubmit="return confirm('Inativar este treinamento?');"><input type="hidden" name="csrf_token" value="<?= e(csrfToken()) ?>"><input type="hidden" name="action" value="inativar"><input type="hidden" name="id" value="<?= (int) $training['id'] ?>"><button class="btn danger small" type="submit"><i class="fa-solid fa-ban"></i> Inativar</button></form></div></td>
+    <?php else: ?><div class="table-wrapper"><table><thead><tr><th>Treinamento</th><th>Período</th><th>Tipo / status</th><th>Local</th><th>Responsável</th><th>Inscritos</th><?php if ($admin): ?><th>Ações</th><?php endif; ?></tr></thead><tbody><?php foreach ($trainings as $training): ?><tr>
+        <td><strong><?= e($training['titulo']) ?></strong><br><small><?= e(formatHours($training['carga_horaria_minutos'])) ?> · <?= e($training['instrutor']) ?></small></td><td><?= e(formatDateTime($training['data_inicio'])) ?><br><small>até <?= e(formatDateTime($training['data_fim'])) ?></small></td><td><?= e($training['tipo_nome']) ?><br><span class="badge"><?= e($training['status_nome']) ?></span></td><td><?= e($training['local_nome']) ?></td><td><?= e($training['responsavel_nome'] ?: 'Não informado') ?></td><td><?= (int) $training['inscritos'] ?></td><?php if ($admin): ?><td><div class="actions"><a class="btn secondary small" href="treinamentos.php?editar=<?= (int) $training['id'] ?>"><i class="fa-solid fa-pen"></i> Editar</a><form method="post" class="inline-form" onsubmit="return confirm('Inativar este treinamento?');"><input type="hidden" name="csrf_token" value="<?= e(csrfToken()) ?>"><input type="hidden" name="action" value="inativar"><input type="hidden" name="id" value="<?= (int) $training['id'] ?>"><button class="btn danger small" type="submit"><i class="fa-solid fa-ban"></i> Inativar</button></form></div></td><?php endif; ?>
     </tr><?php endforeach; ?></tbody></table></div><?php endif; ?>
 </section>
 <?php renderFooter(); ?>

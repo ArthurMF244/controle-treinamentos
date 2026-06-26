@@ -24,6 +24,20 @@ function requireApiLogin(): void
     }
 }
 
+function apiIsAdmin(): bool
+{
+    return ($_SESSION['usuario']['perfil'] ?? 'usuario') === 'admin';
+}
+
+function requireApiAdmin(): void
+{
+    requireApiLogin();
+
+    if (!apiIsAdmin()) {
+        jsonResponse(['erro' => 'Acesso não permitido para o seu perfil.'], 403);
+    }
+}
+
 function requestData(): array
 {
     $contentType = $_SERVER['CONTENT_TYPE'] ?? '';

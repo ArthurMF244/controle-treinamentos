@@ -22,6 +22,12 @@ try {
         WHERE t.ativo = 1 AND t.data_inicio >= NOW()
         ORDER BY t.data_inicio LIMIT 6
     SQL)->fetchAll();
+    if (!apiIsAdmin()) {
+        $metrics = [
+            'total_treinamentos' => $metrics['total_treinamentos'],
+            'treinamentos_ativos' => $metrics['treinamentos_ativos'],
+        ];
+    }
     jsonResponse(['data' => ['indicadores' => $metrics, 'proximos_treinamentos' => $upcoming]]);
 } catch (Throwable $e) {
     internalError($e);

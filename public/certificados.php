@@ -6,8 +6,12 @@ require_once __DIR__ . '/_layout.php';
 requireLogin();
 
 $pdo = db();
+$admin = isAdmin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!$admin) {
+        requireAdmin();
+    }
     requireCsrf('certificados.php');
 
     try {
@@ -73,13 +77,15 @@ SQL)->fetchAll();
 
 renderHeader('Certificados', 'certificados');
 ?>
-<header class="page-header"><div><span class="eyebrow">Conclusão</span><h1>Certificados</h1><p>Emita e consulte os certificados dos treinamentos concluídos.</p></div></header>
+<header class="page-header"><div><span class="eyebrow"><?= $admin ? 'Conclusão' : 'Consulta' ?></span><h1>Certificados</h1><p><?= $admin ? 'Emita e consulte os certificados dos treinamentos concluídos.' : 'Consulte os certificados emitidos nos treinamentos concluídos.' ?></p></div></header>
 
+<?php if ($admin): ?>
 <section class="panel">
     <div class="panel-header"><div><h2>Emitir certificado</h2><p>Disponível apenas para participantes com progresso de 100%.</p></div></div>
     <?php if (!$eligible): ?><div class="notice">Não há participantes elegíveis para emissão no momento.</div>
     <?php else: ?><form method="post" class="data-form compact"><input type="hidden" name="csrf_token" value="<?= e(csrfToken()) ?>"><label class="full-row">Participação elegível<select name="participante_id" required><option value="">Selecione</option><?php foreach ($eligible as $item): ?><option value="<?= (int) $item['id'] ?>"<?= selected($preselected, $item['id']) ?>><?= e($item['pessoa_nome']) ?> — <?= e($item['treinamento_titulo']) ?></option><?php endforeach; ?></select></label><div class="form-actions"><button class="btn primary" type="submit"><i class="fa-solid fa-certificate"></i> Emitir certificado</button></div></form><?php endif; ?>
 </section>
+<?php endif; ?>
 
 <section class="panel">
     <div class="panel-header"><div><h2>Certificados emitidos</h2><p>Lista de certificados disponíveis para validação.</p></div></div>

@@ -5,6 +5,10 @@ declare(strict_types=1);
 require __DIR__ . '/_helpers.php';
 requireApiLogin();
 
+if (in_array(method(), ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+    requireApiAdmin();
+}
+
 try {
     $pdo = db();
     $id = getId();

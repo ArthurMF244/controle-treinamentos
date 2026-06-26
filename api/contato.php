@@ -5,6 +5,10 @@ declare(strict_types=1);
 require __DIR__ . '/_helpers.php';
 requireApiLogin();
 
+if (method() === 'GET') {
+    requireApiAdmin();
+}
+
 try {
     $pdo = db();
     if (method() === 'GET') {
