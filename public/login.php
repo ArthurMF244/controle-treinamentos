@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = trim((string) ($_POST['email'] ?? ''));
         $senha = (string) ($_POST['senha'] ?? '');
 
-        $stmt = db()->prepare('SELECT id, nome, email, senha, perfil, tema, cor_tema FROM usuario WHERE email = ? AND ativo = 1 LIMIT 1');
+        $stmt = db()->prepare('SELECT id, nome, email, senha, perfil, tema, cor_tema, foto, cargo, telefone FROM usuario WHERE email = ? AND ativo = 1 LIMIT 1');
         $stmt->execute([$email]);
         $usuario = $stmt->fetch();
 

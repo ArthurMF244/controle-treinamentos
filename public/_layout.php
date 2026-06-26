@@ -42,6 +42,9 @@ function storeUserInSession(array $user): void
         'perfil' => ($user['perfil'] ?? 'usuario') === 'admin' ? 'admin' : 'usuario',
         'tema' => normalizeTheme($user['tema'] ?? 'light'),
         'cor_tema' => normalizeThemeColor($user['cor_tema'] ?? '#246bfd'),
+        'foto' => profilePhotoPath($user['foto'] ?? null),
+        'cargo' => trim((string) ($user['cargo'] ?? '')),
+        'telefone' => trim((string) ($user['telefone'] ?? '')),
     ];
 }
 
@@ -54,7 +57,7 @@ function syncCurrentUser(): ?array
         return null;
     }
 
-    $stmt = db()->prepare('SELECT id, nome, email, perfil, tema, cor_tema FROM usuario WHERE id = ? AND ativo = 1 LIMIT 1');
+    $stmt = db()->prepare('SELECT id, nome, email, perfil, tema, cor_tema, foto, cargo, telefone FROM usuario WHERE id = ? AND ativo = 1 LIMIT 1');
     $stmt->execute([$id]);
     $freshUser = $stmt->fetch();
 
@@ -106,6 +109,20 @@ function userInitials(?string $name): string
     }
 
     return $initials ?: 'U';
+}
+
+function profilePhotoPath(mixed $path): ?string
+{
+    $path = trim((string) $path);
+
+    return preg_match('#^uploads/perfis/[a-zA-Z0-9._-]+$#', $path) ? $path : null;
+}
+
+function defaultProfileAvatarPath(): ?string
+{
+    $path = 'assets/images/default-user.svg';
+
+    return is_file(__DIR__ . '/' . $path) ? $path : null;
 }
 
 function redirect(string $location): never
@@ -207,7 +224,7 @@ function renderHeader(string $title, string $active): void
         'certificados' => ['certificados.php', 'Certificados', 'fa-certificate', true],
         'relatorios' => ['relatorios.php', 'Relatórios', 'fa-table-list', true],
         'contato' => ['contato.php', $admin ? 'Contatos' : 'Contato', 'fa-envelope', true],
-        'configuracoes' => ['configuracoes.php', 'Configurações', 'fa-gear', true],
+        'admin' => ['admin.php', 'Administração', 'fa-screwdriver-wrench', $admin],
     ];
     ?>
 <!doctype html>
@@ -239,15 +256,20 @@ function renderHeader(string $title, string $active): void
         <div class="sidebar-footer">
             <button class="profile-trigger" type="button" data-profile-menu-toggle aria-expanded="false" aria-controls="profile-menu">
                 <span class="user-summary">
-                    <span class="user-avatar"><?= e(userInitials($user['nome'] ?? null)) ?></span>
+                    <?php if ($photo = profilePhotoPath($user['foto'] ?? null)): ?>
+                        <img class="user-avatar user-photo" src="<?= e($photo) ?>" alt="Foto de <?= e($user['nome'] ?? 'usuário') ?>">
+                    <?php elseif ($defaultAvatar = defaultProfileAvatarPath()): ?>
+                        <img class="user-avatar user-photo user-default-photo" src="<?= e($defaultAvatar) ?>" alt="Avatar padrão de <?= e($user['nome'] ?? 'usuário') ?>">
+                    <?php else: ?>
+                        <span class="user-avatar"><?= e(userInitials($user['nome'] ?? null)) ?></span>
+                    <?php endif; ?>
                     <span><strong><?= e($user['nome'] ?? '') ?></strong><small><?= e(profileLabel($user)) ?></small></span>
                 </span>
                 <i class="fa-solid fa-chevron-up" aria-hidden="true"></i>
             </button>
             <div class="profile-menu" id="profile-menu" data-profile-menu hidden>
-                <a href="configuracoes.php"><i class="fa-regular fa-user"></i> Meu perfil</a>
+                <a href="perfil.php"><i class="fa-regular fa-user"></i> Meu perfil</a>
                 <a href="configuracoes.php"><i class="fa-solid fa-gear"></i> Configurações</a>
-                <button type="button" data-theme-toggle><i class="fa-solid fa-moon"></i> Alternar tema</button>
                 <a href="logout.php"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sair</a>
             </div>
         </div>
@@ -256,7 +278,6 @@ function renderHeader(string $title, string $active): void
         <header class="topbar">
             <button class="menu-toggle" type="button" data-menu-toggle aria-label="Abrir menu"><i class="fa-solid fa-bars"></i></button>
             <div><span class="topbar-label">Sistema de treinamentos</span><strong><?= e($title) ?></strong></div>
-            <button class="topbar-theme" type="button" data-theme-toggle aria-label="Alternar tema"><i class="fa-solid fa-moon"></i></button>
         </header>
         <?php if ($flash = pullFlash()): ?>
             <div class="alert <?= e($flash['type']) ?>" role="alert"><?= e($flash['message']) ?></div>

@@ -60,7 +60,9 @@ As senhas são armazenadas com `password_hash` e validadas com `password_verify`
 - Gestão de treinamentos, pessoas, participantes e certificados para administradores
 - Consulta de treinamentos, participantes, certificados e relatórios para usuários comuns
 - Contatos recebidos disponíveis somente para administradores
-- Configurações pessoais de nome, e-mail, tema claro/escuro e cor principal
+- Área administrativa para gerenciar usuários, áreas, tipos, locais e status
+- Meu perfil com nome, e-mail, cargo, telefone, avatar padrão, upload e remoção de foto
+- Configurações pessoais de tema claro/escuro e cor principal
 - Layout responsivo com sidebar, topbar e menu de perfil
 - APIs JSON com autorização compatível com os perfis
 

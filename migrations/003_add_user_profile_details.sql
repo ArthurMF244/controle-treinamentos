@@ -1,0 +1,4 @@
+ALTER TABLE usuario
+    ADD COLUMN foto VARCHAR(255) NULL AFTER cor_tema,
+    ADD COLUMN cargo VARCHAR(120) NULL AFTER foto,
+    ADD COLUMN telefone VARCHAR(30) NULL AFTER cargo;
